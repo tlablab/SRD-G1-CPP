@@ -36,6 +36,14 @@ target_include_directories(triangle-tests PRIVATE src)
 
 add_test(NAME triangle_raster COMMAND triangle-tests)
 
+add_executable(sample-mask-tests
+    tests/unit/sample_mask_test.cpp
+)
+
+target_include_directories(sample-mask-tests PRIVATE src)
+
+add_test(NAME sample_mask COMMAND sample-mask-tests)
+
 target_include_directories(srd-render PRIVATE src)
 
 if(MSVC)
