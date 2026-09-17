@@ -25,6 +25,18 @@ int clampInt(
     return value;
 }
 
+bool isTopLeftEdge(const Point& from, const Point& to) {
+    int dx = to.x - from.x;
+    int dy = to.y - from.y;
+
+    return dy < 0 || (dy == 0 && dx > 0);
+}
+
+bool passesEdge(long long edgeValue, bool isTopLeft) {
+    return edgeValue > 0 ||
+           (edgeValue == 0 && isTopLeft);
+}
+
 TriSetup setupTriangle(
     const Triangle& triangle
 ){
@@ -76,6 +88,14 @@ TriSetup setupTriangle(
     setup.e0[1] = edgeAtPixelCentre(triangle.c, triangle.a, startX2, startY2);
     setup.e0[2] = edgeAtPixelCentre(triangle.a, triangle.b, startX2, startY2);
     
+    for (int i = 0; i < 3; ++i) {
+        if (area < 0) {
+            setup.topLeft[i] = isTopLeftEdge(to[i], from[i]);
+        } else {
+            setup.topLeft[i] = isTopLeftEdge(from[i], to[i]);
+        }
+    }
+    
     if (area < 0){
         for (int i = 0; i<3; i++){
             setup.e0[i] = -setup.e0[i];
@@ -83,7 +103,7 @@ TriSetup setupTriangle(
             setup.b[i]  = -setup.b[i];
         }
     }
-
+    
     setup.empty = (area==0) || offscreen;
     
     return setup;    
@@ -115,9 +135,9 @@ void drawTriangle(
 
         for (int x = setup.minX; x <= setup.maxX; ++x) {
             bool inside =
-                e[0] >= 0 &&
-                e[1] >= 0 &&
-                e[2] >= 0;
+                passesEdge(e[0], setup.topLeft[0]) &&
+                passesEdge(e[1], setup.topLeft[1]) &&
+                passesEdge(e[2], setup.topLeft[2]);
 
             if (inside) {
                 framebuffer.write(x, y, white);
