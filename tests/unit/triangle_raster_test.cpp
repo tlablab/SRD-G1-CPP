@@ -52,6 +52,31 @@ int main() {
             assert(combined.read(x, y).on);
         }
     }
+    
+    Triangle forward{
+        Point{10, 10},
+        Point{30, 10},
+        Point{10, 30}
+    };
+
+    Triangle reversed{
+        Point{10, 10},
+        Point{10, 30},
+        Point{30, 10}
+    };
+
+    Framebuffer first_fb;
+    Framebuffer second_fb;
+
+    drawTriangle(first_fb, setupTriangle(forward));
+    drawTriangle(second_fb, setupTriangle(reversed));
+
+    for (int y = 0; y < static_cast<int>(Framebuffer::kHeight); ++y) {
+        for (int x = 0; x < static_cast<int>(Framebuffer::kWidth); ++x) {
+            assert(first_fb.read(x, y).on == second_fb.read(x, y).on);
+        }
+    }
+        
 
     return 0;
 }
