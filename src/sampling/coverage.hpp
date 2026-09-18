@@ -16,7 +16,7 @@ struct SampleMask {
         return (bits & (std::uint32_t(1) << sample)) != 0;
     }
      
-     bool set(std::size_t sample) {
+    void set(std::size_t sample) {
         assert(sample < kMaxSamples);
         bits |= std::uint32_t(1) << sample;
     }
