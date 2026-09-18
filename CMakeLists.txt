@@ -44,6 +44,14 @@ target_include_directories(sample-mask-tests PRIVATE src)
 
 add_test(NAME sample_mask COMMAND sample-mask-tests)
 
+add_executable(sample-pattern-tests
+    tests/unit/sample_pattern_test.cpp
+)
+
+target_include_directories(sample-pattern-tests PRIVATE src)
+
+add_test(NAME sample_pattern COMMAND sample-pattern-tests)
+
 target_include_directories(srd-render PRIVATE src)
 
 if(MSVC)
