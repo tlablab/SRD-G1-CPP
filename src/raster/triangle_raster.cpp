@@ -1,19 +1,19 @@
 #include "raster/triangle_raster.hpp"
 #include <algorithm>
 
-long long edgeAtPixelCentre(
+long long edgeAtSample(
     const Point& a,
     const Point& b,
-    int   px2,
-    int   py2
+    long long sampleX4,
+    long long sampleY4
 ) {
-    long long ax2 = 2LL * a.x;
-    long long ay2 = 2LL * a.y;
-    long long bx2 = 2LL * b.x;
-    long long by2 = 2LL * b.y;
+    long long ax4 = 4LL * a.x;
+    long long ay4 = 4LL * a.y;
+    long long bx4 = 4LL * b.x;
+    long long by4 = 4LL * b.y;
 
-    return (bx2 - ax2) * (py2 - ay2)
-         - (by2 - ay2) * (px2 - ax2);
+    return (bx4 - ax4) * (sampleY4 - ay4)
+         - (by4 - ay4) * (sampleX4 - ax4);
 }
 
 int clampInt(
@@ -66,27 +66,27 @@ TriSetup setupTriangle(
     setup.minX = minX; setup.maxX = maxX;
     setup.minY = minY; setup.maxY = maxY;
     
-    int startX2 = 2 * setup.minX + 1;
-    int startY2 = 2 * setup.minY + 1;
+    int startX4 = 4LL * setup.minX + 2;
+    int startY4 = 4LL * setup.minY + 2;
     
     Point from[3] = {triangle.b, triangle.c, triangle.a};
     Point to[3]   = {triangle.c, triangle.a, triangle.b};
     
     for (int i = 0; i < 3; ++i) {
-        setup.a[i] = 4LL * (from[i].y - to[i].y);
-        setup.b[i] = 4LL * (to[i].x - from[i].x);
+        setup.a[i] = 16LL * (from[i].y - to[i].y);
+        setup.b[i] = 16LL * (to[i].x - from[i].x);
     }
     
-    area = edgeAtPixelCentre(
+    area = edgeAtSample(
         triangle.a,
         triangle.b,
-        2 * triangle.c.x,
-        2 * triangle.c.y
+        4LL * triangle.c.x,
+        4LL * triangle.c.y
     );
         
-    setup.e0[0] = edgeAtPixelCentre(triangle.b, triangle.c, startX2, startY2);
-    setup.e0[1] = edgeAtPixelCentre(triangle.c, triangle.a, startX2, startY2);
-    setup.e0[2] = edgeAtPixelCentre(triangle.a, triangle.b, startX2, startY2);
+    setup.e0[0] = edgeAtSample(triangle.b, triangle.c, startX4, startY4);
+    setup.e0[1] = edgeAtSample(triangle.c, triangle.a, startX4, startY4);
+    setup.e0[2] = edgeAtSample(triangle.a, triangle.b, startX4, startY4);
     
     for (int i = 0; i < 3; ++i) {
         if (area < 0) {
