@@ -1,14 +1,14 @@
-#include "core/coveragebuffer.hpp"
 #include "sampling/coverage.hpp"
+#include "core/coveragebuffer.hpp"
 
-bool Coveragebuffer::inBounds(int x, int y) const{
+bool CoverageBuffer::inBounds(int x, int y) const{
     return x >= 0 &&
            x < static_cast<int>(kWidth) &&
            y >= 0 &&
            y < static_cast<int>(kHeight);
 }
 
-SampleMask Coveragebuffer::read(int x, int y) const{
+SampleMask CoverageBuffer::read(int x, int y) const{
     if(!inBounds(x,y)){
         return SampleMask{};
     }
@@ -17,7 +17,7 @@ SampleMask Coveragebuffer::read(int x, int y) const{
     return masks_[index];
 }
 
-void Coveragebuffer::write(int x, int y, SampleMask mask){
+void CoverageBuffer::merge(int x, int y, SampleMask mask){
     if(!inBounds(x,y)){
         return;
     }
@@ -26,7 +26,7 @@ void Coveragebuffer::write(int x, int y, SampleMask mask){
     masks_[index].bits |= mask.bits;
 }
 
-void Coveragebuffer::clear(){
+void CoverageBuffer::clear(){
     masks_.fill(SampleMask{});
     return;
 }
