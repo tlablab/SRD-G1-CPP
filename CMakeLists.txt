@@ -17,6 +17,7 @@ add_executable(srd-render
     src/raster/line_raster.cpp
     src/raster/triangle_raster.cpp
     src/core/coveragebuffer.cpp
+    src/core/multisamplebuffer.cpp
     src/resolve/resolve.cpp
 )
 
@@ -45,10 +46,24 @@ add_test(NAME triangle_raster COMMAND triangle-tests)
 add_executable(triangle-tests
     tests/unit/triangle_raster_test.cpp
     src/core/coveragebuffer.cpp
+    src/core/multisamplebuffer.cpp
     src/raster/triangle_raster.cpp
 )
 
 target_include_directories(triangle-tests PRIVATE src)
+
+# Coloured triangle samples
+
+add_test(NAME triangle_colour COMMAND triangle-colour-tests)
+
+add_executable(triangle-colour-tests
+    tests/unit/triangle_colour_test.cpp
+    src/core/coveragebuffer.cpp
+    src/core/multisamplebuffer.cpp
+    src/raster/triangle_raster.cpp
+)
+
+target_include_directories(triangle-colour-tests PRIVATE src)
 
 # Sample mask tests
 
@@ -81,11 +96,23 @@ add_executable(coverage-buffer-tests
 
 target_include_directories(coverage-buffer-tests PRIVATE src)
 
+# Multisample colour buffer tests
+
+add_executable(multisample-buffer-tests
+    tests/unit/multisamplebuffer_test.cpp
+    src/core/multisamplebuffer.cpp
+)
+
+target_include_directories(multisample-buffer-tests PRIVATE src)
+
+add_test(NAME multisample_buffer COMMAND multisample-buffer-tests)
+
 # Resolve tests
 
 add_executable(resolve-tests
     tests/unit/resolve_test.cpp
     src/core/coveragebuffer.cpp
+    src/core/multisamplebuffer.cpp
     src/core/framebuffer.cpp
     src/resolve/resolve.cpp
 )
@@ -93,6 +120,20 @@ add_executable(resolve-tests
 target_include_directories(resolve-tests PRIVATE src)
 
 add_test(NAME resolve COMMAND resolve-tests)
+
+# RGB multisample resolve tests
+
+add_executable(rgb-resolve-tests
+    tests/unit/rgb_resolve_test.cpp
+    src/core/coveragebuffer.cpp
+    src/core/multisamplebuffer.cpp
+    src/core/framebuffer.cpp
+    src/resolve/resolve.cpp
+)
+
+target_include_directories(rgb-resolve-tests PRIVATE src)
+
+add_test(NAME rgb_resolve COMMAND rgb-resolve-tests)
 
 
 #---------------------------------------------------------------------------

@@ -1,44 +1,54 @@
+#include <cstdint>
 #include <iostream>
 
-#include "core/coveragebuffer.hpp"
 #include "core/framebuffer.hpp"
+#include "core/multisamplebuffer.hpp"
+#include "core/pixel.hpp"
 #include "core/triangle.hpp"
 #include "core/point.hpp"
 #include "io/ppm_writer.hpp"
 #include "raster/triangle_raster.hpp"
 #include "sampling/sample_pattern.hpp"
 #include "resolve/resolve.hpp"
-// Keep the geometry identical for every sample pattern.
-static void drawComparisonScene(CoverageBuffer& buffer, const SamplePattern& pattern) {
-    const Triangle triangles[] = {
-        // Top-left: a large triangle with shallow and steep diagonal edges.
-        {Point{6, 5}, Point{59, 12}, Point{17, 29}},
 
-        // Top-right: two triangles sharing a diagonal. The rectangle should
-        // be solid white, with no seam between its two halves.
-        {Point{72, 5}, Point{119, 5}, Point{72, 29}},
-        {Point{119, 5}, Point{119, 29}, Point{72, 29}},
+static Pixel makeColour(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
+    Pixel colour;
+    colour.r = r;
+    colour.g = g;
+    colour.b = b;
+    return colour;
+}
 
-        // Bottom-left: a thin triangle, sensitive to sample placement.
-        {Point{6, 43}, Point{59, 57}, Point{58, 59}},
+struct ColouredTriangle {
+    Triangle triangle;
+    Pixel colour;
+};
 
-        // Bottom-right: extends beyond the right and bottom buffer edges.
-        {Point{85, 36}, Point{140, 47}, Point{98, 76}}
+static void drawComparisonScene(MultisampleBuffer& buffer, const SamplePattern& pattern) {
+    const ColouredTriangle triangles[] = {
+        {{Point{6, 5}, Point{59, 12}, Point{17, 29}}, makeColour(240, 100, 55)},
+        {{Point{26, 8}, Point{63, 26}, Point{23, 32}}, makeColour(40, 210, 220)},
+
+        {{Point{72, 5}, Point{119, 5}, Point{72, 29}}, makeColour(60, 150, 240)},
+        {{Point{119, 5}, Point{119, 29}, Point{72, 29}}, makeColour(245, 205, 65)},
+
+        {{Point{6, 43}, Point{59, 57}, Point{58, 59}}, makeColour(90, 230, 150)},
+
+        {{Point{85, 36}, Point{140, 47}, Point{98, 76}}, makeColour(185, 100, 235)}
     };
 
-    for (const Triangle& triangle : triangles) {
-        drawTriangle(buffer, setupTriangle(triangle), pattern);
+    for (const ColouredTriangle& item : triangles) {
+        drawTriangle(buffer, setupTriangle(item.triangle), pattern, item.colour);
     }
 }
 
 static bool renderComparison(const SamplePattern& pattern, const char* filename) {
-    CoverageBuffer buffer;
+    MultisampleBuffer buffer(pattern.count);
     Framebuffer framebuffer;
 
-    // Accumulate the whole scene before converting coverage to brightness.
-    buffer.clear();
+    buffer.fill(makeColour(18, 25, 38));
     drawComparisonScene(buffer, pattern);
-    resolve(buffer, framebuffer, pattern.count);
+    resolve(buffer, framebuffer);
 
     if (!writePpm(framebuffer, filename)) {
         std::cerr << "Could not write " << filename << '\n';
@@ -51,7 +61,8 @@ static bool renderComparison(const SamplePattern& pattern, const char* filename)
 
 int main() {
     if (!renderComparison(makeSingleSamplePattern(), "scene-1x.ppm") ||
-        !renderComparison(makeFourSamplePattern(), "scene-4x.ppm")) {
+        !renderComparison(makeFourSamplePattern(),   "scene-4x.ppm")   ||
+        !renderComparison(makeEightSamplePattern(),  "scene-8x.ppm")) {
         return 1;
     }
     return 0;

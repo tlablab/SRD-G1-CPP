@@ -1,6 +1,7 @@
 # SRD-G1 software raster-core model
 
 This is a C++ reference model for the SRD-G1 raster pipeline.
+Now with a simple 4x MSAA.
 
 ## Build
 

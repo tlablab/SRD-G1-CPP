@@ -19,8 +19,6 @@ long long edgeAtSample(
          - (by4 - ay4) * (sampleX4 - ax4);
 }
 
-
-
 int clampInt(
     int value,
     int maximum
@@ -172,6 +170,53 @@ void drawTriangle(
             SampleMask coverage = triangleCoverage(setup, e, pattern);
 
             buffer.merge(x,y,coverage);
+
+            for (int i = 0; i < 3; ++i) {
+                e[i] += setup.a[i];
+            }
+
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            rowE[i] += setup.b[i];
+        }
+    }
+}
+
+void drawTriangle(
+    MultisampleBuffer& buffer,
+    const TriSetup& setup,
+    const SamplePattern& pattern,
+    Pixel colour
+){
+    assert(pattern.count == buffer.sampleCount());
+
+    if (setup.empty) {
+        return;
+    }
+
+    long long rowE[3] = {
+        setup.e0[0],
+        setup.e0[1],
+        setup.e0[2]
+    };
+
+    for (int y = setup.minY; y <= setup.maxY; ++y) {
+        long long e[3] = {
+            rowE[0],
+            rowE[1],
+            rowE[2]
+        };
+
+        for (int x = setup.minX; x <= setup.maxX; ++x) {
+
+            SampleMask coverage = triangleCoverage(setup, e, pattern);
+
+            for (std::size_t sample = 0; sample < pattern.count; ++sample) {
+                if (coverage.test(sample)) {
+                    buffer.writeSample(x, y, sample, colour);
+                }
+            }
 
             for (int i = 0; i < 3; ++i) {
                 e[i] += setup.a[i];

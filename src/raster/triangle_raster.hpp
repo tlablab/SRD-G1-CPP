@@ -3,6 +3,7 @@
 #include "core/coveragebuffer.hpp"
 #include "core/triangle.hpp"
 #include "sampling/sample_pattern.hpp"
+#include "core/multisamplebuffer.hpp"
 
 struct TriSetup {
     bool topLeft[3];
@@ -25,6 +26,14 @@ void drawTriangle(
     const TriSetup& setup,
     const SamplePattern& pattern
 );
+
+void drawTriangle(
+    MultisampleBuffer& buffer,
+    const TriSetup& setup,
+    const SamplePattern& pattern,
+    Pixel colour
+);
+
 SampleMask triangleCoverage(
     const TriSetup& setup,
     const long long (&centreEdges)[3],
