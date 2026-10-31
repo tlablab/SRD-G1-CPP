@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/framebuffer.hpp"
+#include "core/coveragebuffer.hpp"
 #include "core/triangle.hpp"
 #include "sampling/sample_pattern.hpp"
 
@@ -21,8 +21,9 @@ TriSetup setupTriangle(
 );
 
 void drawTriangle(
-    Framebuffer& framebuffer,
-    const TriSetup& setup
+    CoverageBuffer& buffer,
+    const TriSetup& setup,
+    const SamplePattern& pattern
 );
 SampleMask triangleCoverage(
     const TriSetup& setup,

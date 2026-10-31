@@ -1,6 +1,6 @@
 #include <cassert>
 
-#include "core/framebuffer.hpp"
+#include "core/coveragebuffer.hpp"
 #include "core/triangle.hpp"
 #include "raster/triangle_raster.hpp"
 #include "sampling/coverage.hpp"
@@ -25,8 +25,10 @@ static SampleMask coverageAt(
     return triangleCoverage(setup, centreEdges, pattern);
 }
 
-int main() {
-    Framebuffer framebuffer;
+// Run the rasterizer integration checks with both supported sample patterns.
+static void testTriangleRaster(const SamplePattern& pattern) {
+    CoverageBuffer buffer;
+    const std::uint32_t fullMask = (std::uint32_t(1) << pattern.count) - 1;
 
     Triangle triangle{
         Point{10, 10},
@@ -34,12 +36,12 @@ int main() {
         Point{10, 30}
     };
 
-    drawTriangle(framebuffer, setupTriangle(triangle));
+    drawTriangle(buffer, setupTriangle(triangle), pattern);
 
-    assert(framebuffer.read(11, 11).on);
-    assert(framebuffer.read(15, 15).on);
-    assert(!framebuffer.read(25, 25).on);
-    assert(!framebuffer.read(31, 10).on);
+    assert(buffer.read(11, 11).bits == fullMask);
+    assert(buffer.read(15, 15).bits == fullMask);
+    assert(buffer.read(25, 25).bits == 0);
+    assert(buffer.read(31, 10).bits == 0);
 
     // two triangles (10-by-10 rectangle) which share the diagonal from
     // (20, 10) to (10, 20). Pixel (14, 15) has centre (14.5, 15.5)
@@ -74,28 +76,35 @@ int main() {
     assert((firstMask.bits & secondMask.bits) == 0);    // No overlap.
     assert((firstMask.bits | secondMask.bits) == 0xF);  // No gaps.
 
-    Framebuffer firstOnly;
-    Framebuffer secondOnly;
-    Framebuffer combined;
+    CoverageBuffer firstOnly;
+    CoverageBuffer secondOnly;
+    CoverageBuffer combined;
 
-    drawTriangle(firstOnly, setupTriangle(first));
-    drawTriangle(secondOnly, setupTriangle(second));
-    drawTriangle(combined, setupTriangle(first));
-    drawTriangle(combined, setupTriangle(second));
+    drawTriangle(firstOnly, firstSetup, pattern);
+    drawTriangle(secondOnly, secondSetup, pattern);
+    drawTriangle(combined, firstSetup, pattern);
+    drawTriangle(combined, secondSetup, pattern);
 
-    assert(!firstOnly.read(14, 15).on);
-    assert(secondOnly.read(14, 15).on);
-    assert(combined.read(14, 15).on);
+    // With 1x, the centre belongs only to the second triangle. With 4x,
+    // sample 0 belongs to the first and the remaining three to the second.
+    assert(firstOnly.read(14, 15).bits == (pattern.count == 1 ? 0x0 : 0x1));
+    assert(secondOnly.read(14, 15).bits == (pattern.count == 1 ? 0x1 : 0xE));
+    assert(combined.read(14, 15).bits == fullMask);
 
-    for (int y = 10; y < 20; ++y) {
-        for (int x = 10; x < 20; ++x) {
-            assert(combined.read(x, y).on);
+    for (int y = 0; y < static_cast<int>(CoverageBuffer::kHeight); ++y) {
+        for (int x = 0; x < static_cast<int>(CoverageBuffer::kWidth); ++x) {
+            const bool inRectangle = x >= 10 && x < 20 && y >= 10 && y < 20;
+            assert(combined.read(x, y).bits == (inRectangle ? fullMask : 0));
 
-            // The same ownership rule must hold throughout the rectangle.
-            const SampleMask a = coverageAt(firstSetup, x, y, fourSamples);
-            const SampleMask b = coverageAt(secondSetup, x, y, fourSamples);
+            // Inspect stored results, not just the standalone coverage helper.
+            const SampleMask a = firstOnly.read(x, y);
+            const SampleMask b = secondOnly.read(x, y);
             assert((a.bits & b.bits) == 0);
-            assert((a.bits | b.bits) == 0xF);
+            assert((a.bits | b.bits) == combined.read(x, y).bits);
+
+            // Compare incremental edge stepping with evaluation at this pixel.
+            assert(a.bits == coverageAt(firstSetup, x, y, pattern).bits);
+            assert(b.bits == coverageAt(secondSetup, x, y, pattern).bits);
         }
     }
 
@@ -111,18 +120,21 @@ int main() {
         Point{30, 10}
     };
 
-    Framebuffer first_fb;
-    Framebuffer second_fb;
+    CoverageBuffer forwardBuffer;
+    CoverageBuffer reversedBuffer;
 
-    drawTriangle(first_fb, setupTriangle(forward));
-    drawTriangle(second_fb, setupTriangle(reversed));
+    drawTriangle(forwardBuffer, setupTriangle(forward), pattern);
+    drawTriangle(reversedBuffer, setupTriangle(reversed), pattern);
 
-    for (int y = 0; y < static_cast<int>(Framebuffer::kHeight); ++y) {
-        for (int x = 0; x < static_cast<int>(Framebuffer::kWidth); ++x) {
-            assert(first_fb.read(x, y).on == second_fb.read(x, y).on);
+    for (int y = 0; y < static_cast<int>(CoverageBuffer::kHeight); ++y) {
+        for (int x = 0; x < static_cast<int>(CoverageBuffer::kWidth); ++x) {
+            assert(forwardBuffer.read(x, y).bits == reversedBuffer.read(x, y).bits);
         }
     }
+}
 
-
+int main() {
+    testTriangleRaster(makeSingleSamplePattern());
+    testTriangleRaster(makeFourSamplePattern());
     return 0;
 }

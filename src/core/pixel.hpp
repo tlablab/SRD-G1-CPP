@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 struct Pixel {
-    bool on = false;
+    std::uint8_t intensity = 0;
 };

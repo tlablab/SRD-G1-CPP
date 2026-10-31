@@ -15,7 +15,7 @@ void drawLine(Framebuffer& framebuffer, Point start, Point end) {
     int error = dx + dy;
 
     Pixel white;
-    white.on = true;
+    white.intensity = 255;
 
     while (true) {
         framebuffer.write(x, y, white);

@@ -16,6 +16,8 @@ add_executable(srd-render
     src/io/ppm_writer.cpp
     src/raster/line_raster.cpp
     src/raster/triangle_raster.cpp
+    src/core/coveragebuffer.cpp
+    src/resolve/resolve.cpp
 )
 
 target_include_directories(srd-render PRIVATE src)
@@ -42,7 +44,7 @@ add_test(NAME triangle_raster COMMAND triangle-tests)
 
 add_executable(triangle-tests
     tests/unit/triangle_raster_test.cpp
-    src/core/framebuffer.cpp
+    src/core/coveragebuffer.cpp
     src/raster/triangle_raster.cpp
 )
 
@@ -78,6 +80,19 @@ add_executable(coverage-buffer-tests
 )
 
 target_include_directories(coverage-buffer-tests PRIVATE src)
+
+# Resolve tests
+
+add_executable(resolve-tests
+    tests/unit/resolve_test.cpp
+    src/core/coveragebuffer.cpp
+    src/core/framebuffer.cpp
+    src/resolve/resolve.cpp
+)
+
+target_include_directories(resolve-tests PRIVATE src)
+
+add_test(NAME resolve COMMAND resolve-tests)
 
 
 #---------------------------------------------------------------------------

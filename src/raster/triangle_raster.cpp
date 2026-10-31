@@ -1,4 +1,5 @@
 #include "raster/triangle_raster.hpp"
+#include "core/coveragebuffer.hpp"
 #include "sampling/coverage.hpp"
 #include "sampling/sample_pattern.hpp"
 #include <algorithm>
@@ -75,8 +76,8 @@ SampleMask triangleCoverage(
 TriSetup setupTriangle(
     const Triangle& triangle
 ){
-    const int framebufferMaxX = static_cast<int>(Framebuffer::kWidth) - 1;
-    const int framebufferMaxY = static_cast<int>(Framebuffer::kHeight) - 1;
+    const int coveragebufferMaxX = static_cast<int>(CoverageBuffer::kWidth) - 1;
+    const int coveragebufferMaxY = static_cast<int>(CoverageBuffer::kHeight) - 1;
 
     TriSetup setup = {};
 
@@ -92,11 +93,11 @@ TriSetup setupTriangle(
     long long area = 0;
 
     bool offscreen;
-    offscreen = (maxX < 0) || (minX > framebufferMaxX)
-             || (maxY < 0) || (minY > framebufferMaxY);
+    offscreen = (maxX < 0) || (minX > coveragebufferMaxX)
+             || (maxY < 0) || (minY > coveragebufferMaxY);
 
-    minX = clampInt(minX, framebufferMaxX);  maxX = clampInt(maxX, framebufferMaxX);
-    minY = clampInt(minY, framebufferMaxY);  maxY = clampInt(maxY, framebufferMaxY);
+    minX = clampInt(minX, coveragebufferMaxX);  maxX = clampInt(maxX, coveragebufferMaxX);
+    minY = clampInt(minY, coveragebufferMaxY);  maxY = clampInt(maxY, coveragebufferMaxY);
 
     setup.minX = minX; setup.maxX = maxX;
     setup.minY = minY; setup.maxY = maxY;
@@ -145,17 +146,13 @@ TriSetup setupTriangle(
 }
 
 void drawTriangle(
-    Framebuffer& framebuffer,
-    const TriSetup& setup
+    CoverageBuffer& buffer,
+    const TriSetup& setup,
+    const SamplePattern& pattern
 ) {
     if (setup.empty) {
         return;
     }
-
-    Pixel white;
-    white.on = true;
-
-    SamplePattern pattern = makeSingleSamplePattern();
 
     long long rowE[3] = {
         setup.e0[0],
@@ -172,23 +169,9 @@ void drawTriangle(
 
         for (int x = setup.minX; x <= setup.maxX; ++x) {
 
-
-            /*
-            bool inside =
-                passesEdge(e[0], setup.topLeft[0]) &&
-                passesEdge(e[1], setup.topLeft[1]) &&
-                passesEdge(e[2], setup.topLeft[2]);
-
-            if (inside) {
-                framebuffer.write(x, y, white);
-            }
-            */
-
             SampleMask coverage = triangleCoverage(setup, e, pattern);
 
-            if(coverage.any()){
-                framebuffer.write(x, y, white);
-            }
+            buffer.merge(x,y,coverage);
 
             for (int i = 0; i < 3; ++i) {
                 e[i] += setup.a[i];
