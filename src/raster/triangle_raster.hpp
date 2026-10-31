@@ -2,7 +2,7 @@
 
 #include "core/framebuffer.hpp"
 #include "core/triangle.hpp"
-#include "core/pixel.hpp"
+#include "sampling/sample_pattern.hpp"
 
 struct TriSetup {
     bool topLeft[3];
@@ -21,6 +21,11 @@ TriSetup setupTriangle(
 );
 
 void drawTriangle(
-    Framebuffer& framebuffer, 
+    Framebuffer& framebuffer,
     const TriSetup& setup
+);
+SampleMask triangleCoverage(
+    const TriSetup& setup,
+    const long long (&centreEdges)[3],
+    const SamplePattern& pattern
 );

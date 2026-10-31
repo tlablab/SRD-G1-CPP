@@ -3,6 +3,27 @@
 #include "core/framebuffer.hpp"
 #include "core/triangle.hpp"
 #include "raster/triangle_raster.hpp"
+#include "sampling/coverage.hpp"
+#include "sampling/sample_pattern.hpp"
+
+// Evaluate coverage at one pixel without walking the whole bounding box.
+static SampleMask coverageAt(
+    const TriSetup& setup,
+    int x,
+    int y,
+    const SamplePattern& pattern
+) {
+    long long centreEdges[3];
+
+    for (int i = 0; i < 3; ++i) {
+        centreEdges[i] =
+            setup.e0[i]
+            + setup.a[i] * (x - setup.minX)
+            + setup.b[i] * (y - setup.minY);
+    }
+
+    return triangleCoverage(setup, centreEdges, pattern);
+}
 
 int main() {
     Framebuffer framebuffer;
@@ -34,6 +55,25 @@ int main() {
         Point{10, 20}
     };
 
+    const TriSetup firstSetup = setupTriangle(first);
+    const TriSetup secondSetup = setupTriangle(second);
+    const SamplePattern fourSamples = makeFourSamplePattern();
+
+    // All four samples are inside at (11, 11), and outside at (19, 19).
+    assert(coverageAt(firstSetup, 11, 11, fourSamples).bits == 0xF);
+    assert(coverageAt(firstSetup, 19, 19, fourSamples).bits == 0);
+
+    // At (14, 15), sample 0 is below x + y = 30, samples 1 and 2
+    // lie exactly on it, and sample 3 is above it. The top-left rule
+    // assigns the two on-edge samples to the second triangle.
+    const SampleMask firstMask = coverageAt(firstSetup, 14, 15, fourSamples);
+    const SampleMask secondMask = coverageAt(secondSetup, 14, 15, fourSamples);
+
+    assert(firstMask.bits == 0x1);
+    assert(secondMask.bits == 0xE);
+    assert((firstMask.bits & secondMask.bits) == 0);    // No overlap.
+    assert((firstMask.bits | secondMask.bits) == 0xF);  // No gaps.
+
     Framebuffer firstOnly;
     Framebuffer secondOnly;
     Framebuffer combined;
@@ -50,9 +90,15 @@ int main() {
     for (int y = 10; y < 20; ++y) {
         for (int x = 10; x < 20; ++x) {
             assert(combined.read(x, y).on);
+
+            // The same ownership rule must hold throughout the rectangle.
+            const SampleMask a = coverageAt(firstSetup, x, y, fourSamples);
+            const SampleMask b = coverageAt(secondSetup, x, y, fourSamples);
+            assert((a.bits & b.bits) == 0);
+            assert((a.bits | b.bits) == 0xF);
         }
     }
-    
+
     Triangle forward{
         Point{10, 10},
         Point{30, 10},
@@ -76,7 +122,7 @@ int main() {
             assert(first_fb.read(x, y).on == second_fb.read(x, y).on);
         }
     }
-        
+
 
     return 0;
 }

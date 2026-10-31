@@ -17,6 +17,7 @@ install_manifest.txt
 *.dll
 *.pdb
 *.ilk
+*.clangd
 
 # Generated renderer output
 /frame.ppm
