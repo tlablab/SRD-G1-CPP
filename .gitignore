@@ -21,6 +21,8 @@ install_manifest.txt
 
 # Generated renderer output
 /frame.ppm
+/scene-1x.ppm
+/scene-4x.ppm
 /out/
 
 # Editor / IDE state

@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cassert>
 
 #include "core/coveragebuffer.hpp"
 #include "core/framebuffer.hpp"
@@ -9,27 +8,51 @@
 #include "raster/triangle_raster.hpp"
 #include "sampling/sample_pattern.hpp"
 #include "resolve/resolve.hpp"
+// Keep the geometry identical for every sample pattern.
+static void drawComparisonScene(CoverageBuffer& buffer, const SamplePattern& pattern) {
+    const Triangle triangles[] = {
+        // Top-left: a large triangle with shallow and steep diagonal edges.
+        {Point{6, 5}, Point{59, 12}, Point{17, 29}},
 
+        // Top-right: two triangles sharing a diagonal. The rectangle should
+        // be solid white, with no seam between its two halves.
+        {Point{72, 5}, Point{119, 5}, Point{72, 29}},
+        {Point{119, 5}, Point{119, 29}, Point{72, 29}},
 
-int main() {
+        // Bottom-left: a thin triangle, sensitive to sample placement.
+        {Point{6, 43}, Point{59, 57}, Point{58, 59}},
+
+        // Bottom-right: extends beyond the right and bottom buffer edges.
+        {Point{85, 36}, Point{140, 47}, Point{98, 76}}
+    };
+
+    for (const Triangle& triangle : triangles) {
+        drawTriangle(buffer, setupTriangle(triangle), pattern);
+    }
+}
+
+static bool renderComparison(const SamplePattern& pattern, const char* filename) {
     CoverageBuffer buffer;
     Framebuffer framebuffer;
 
-    Point p1{12, 15};
-    Point p2{40, 10};
-    Point p3{30, 30};
-
-    Triangle tri{p1, p2, p3};
-
-    SamplePattern pattern;
-    pattern = makeFourSamplePattern();
-
-    drawTriangle(buffer, setupTriangle(tri), pattern);
+    // Accumulate the whole scene before converting coverage to brightness.
+    buffer.clear();
+    drawComparisonScene(buffer, pattern);
     resolve(buffer, framebuffer, pattern.count);
-    if (!writePpm(framebuffer, "frame.ppm")) {
-        std::cerr << "Could not write frame.ppm\n";
-        return 1;
+
+    if (!writePpm(framebuffer, filename)) {
+        std::cerr << "Could not write " << filename << '\n';
+        return false;
     }
 
+    std::cout << "Wrote " << filename << " (" << pattern.count << "x sampling)\n";
+    return true;
+}
+
+int main() {
+    if (!renderComparison(makeSingleSamplePattern(), "scene-1x.ppm") ||
+        !renderComparison(makeFourSamplePattern(), "scene-4x.ppm")) {
+        return 1;
+    }
     return 0;
 }
