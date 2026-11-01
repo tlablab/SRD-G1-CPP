@@ -23,6 +23,7 @@ install_manifest.txt
 /frame.ppm
 /scene-1x.ppm
 /scene-4x.ppm
+/scene-8x.ppm
 /out/
 
 # Editor / IDE state

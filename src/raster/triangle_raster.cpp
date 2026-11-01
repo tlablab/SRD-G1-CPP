@@ -1,5 +1,6 @@
 #include "raster/triangle_raster.hpp"
 #include "core/coveragebuffer.hpp"
+#include "core/depthbuffer.hpp"
 #include "sampling/coverage.hpp"
 #include "sampling/sample_pattern.hpp"
 #include <algorithm>
@@ -215,6 +216,58 @@ void drawTriangle(
             for (std::size_t sample = 0; sample < pattern.count; ++sample) {
                 if (coverage.test(sample)) {
                     buffer.writeSample(x, y, sample, colour);
+                }
+            }
+
+            for (int i = 0; i < 3; ++i) {
+                e[i] += setup.a[i];
+            }
+
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            rowE[i] += setup.b[i];
+        }
+    }
+}
+
+void drawTriangle(
+    MultisampleBuffer& colourBuffer,
+    DepthBuffer& depthBuffer,
+    const TriSetup& setup,
+    const SamplePattern& pattern,
+    Pixel colour,
+    Depth depth
+){
+    assert(pattern.count == colourBuffer.sampleCount());
+    assert(pattern.count == depthBuffer.sampleCount());
+
+    if (setup.empty) {
+        return;
+    }
+
+    long long rowE[3] = {
+        setup.e0[0],
+        setup.e0[1],
+        setup.e0[2]
+    };
+
+    for (int y = setup.minY; y <= setup.maxY; ++y) {
+        long long e[3] = {
+            rowE[0],
+            rowE[1],
+            rowE[2]
+        };
+
+        for (int x = setup.minX; x <= setup.maxX; ++x) {
+
+            SampleMask coverage = triangleCoverage(setup, e, pattern);
+
+            for (std::size_t sample = 0; sample < pattern.count; ++sample) {
+                if (coverage.test(sample)&&
+                    depth < depthBuffer.read(x, y, sample)) {
+                    depthBuffer.write(x, y, sample, depth);
+                    colourBuffer.writeSample(x, y, sample, colour);
                 }
             }
 

@@ -30,8 +30,6 @@ enable_testing()
 
 # Line raster tests
 
-add_test(NAME line_raster COMMAND srd-tests)
-
 add_executable(srd-tests
     tests/unit/line_raster_test.cpp
     src/core/framebuffer.cpp
@@ -40,12 +38,13 @@ add_executable(srd-tests
 
 target_include_directories(srd-tests PRIVATE src)
 
-# Triangle tests
+add_test(NAME line_raster COMMAND srd-tests)
 
-add_test(NAME triangle_raster COMMAND triangle-tests)
+# Triangle tests
 
 add_executable(triangle-tests
     tests/unit/triangle_raster_test.cpp
+    src/core/depthbuffer.cpp
     src/core/coveragebuffer.cpp
     src/core/multisamplebuffer.cpp
     src/raster/triangle_raster.cpp
@@ -53,12 +52,13 @@ add_executable(triangle-tests
 
 target_include_directories(triangle-tests PRIVATE src)
 
-# Coloured triangle samples
+add_test(NAME triangle_raster COMMAND triangle-tests)
 
-add_test(NAME triangle_colour COMMAND triangle-colour-tests)
+# Coloured triangle samples
 
 add_executable(triangle-colour-tests
     tests/unit/triangle_colour_test.cpp
+    src/core/depthbuffer.cpp
     src/core/coveragebuffer.cpp
     src/core/multisamplebuffer.cpp
     src/raster/triangle_raster.cpp
@@ -66,9 +66,23 @@ add_executable(triangle-colour-tests
 
 target_include_directories(triangle-colour-tests PRIVATE src)
 
-# Sample mask tests
+add_test(NAME triangle_colour COMMAND triangle-colour-tests)
 
-add_test(NAME sample_mask COMMAND sample-mask-tests)
+# Depth-tested triangle integration tests
+
+add_executable(triangle-depth-tests
+    tests/unit/triangle_depth_test.cpp
+    src/core/coveragebuffer.cpp
+    src/core/multisamplebuffer.cpp
+    src/core/depthbuffer.cpp
+    src/raster/triangle_raster.cpp
+)
+
+target_include_directories(triangle-depth-tests PRIVATE src)
+
+add_test(NAME triangle_depth COMMAND triangle-depth-tests)
+
+# Sample mask tests
 
 add_executable(sample-mask-tests
     tests/unit/sample_mask_test.cpp
@@ -76,9 +90,9 @@ add_executable(sample-mask-tests
 
 target_include_directories(sample-mask-tests PRIVATE src)
 
-# Sample pattern tests
+add_test(NAME sample_mask COMMAND sample-mask-tests)
 
-add_test(NAME sample_pattern COMMAND sample-pattern-tests)
+# Sample pattern tests
 
 add_executable(sample-pattern-tests
     tests/unit/sample_pattern_test.cpp
@@ -86,9 +100,9 @@ add_executable(sample-pattern-tests
 
 target_include_directories(sample-pattern-tests PRIVATE src)
 
-# Coverage buffer tests
+add_test(NAME sample_pattern COMMAND sample-pattern-tests)
 
-add_test(NAME coverage_buffer COMMAND coverage-buffer-tests)
+# Coverage buffer tests
 
 add_executable(coverage-buffer-tests
     tests/unit/coveragebuffer_test.cpp
@@ -96,6 +110,8 @@ add_executable(coverage-buffer-tests
 )
 
 target_include_directories(coverage-buffer-tests PRIVATE src)
+
+add_test(NAME coverage_buffer COMMAND coverage-buffer-tests)
 
 # Multisample colour buffer tests
 
@@ -107,6 +123,17 @@ add_executable(multisample-buffer-tests
 target_include_directories(multisample-buffer-tests PRIVATE src)
 
 add_test(NAME multisample_buffer COMMAND multisample-buffer-tests)
+
+# Depth buffer tests
+
+add_executable(depth-buffer-tests
+    tests/unit/depthbuffer_test.cpp
+    src/core/depthbuffer.cpp
+)
+
+target_include_directories(depth-buffer-tests PRIVATE src)
+
+add_test(NAME depth_buffer COMMAND depth-buffer-tests)
 
 # Resolve tests
 
