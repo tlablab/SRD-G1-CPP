@@ -13,6 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(srd-render
     apps/srd-render/main.cpp
     src/core/framebuffer.cpp
+    src/core/depthbuffer.cpp
     src/io/ppm_writer.cpp
     src/raster/line_raster.cpp
     src/raster/triangle_raster.cpp
